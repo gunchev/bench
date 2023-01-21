@@ -1,16 +1,18 @@
+# Where this Makefile is located
 TOP := $(shell dirname "$(abspath $(lastword $(MAKEFILE_LIST)))")
-CMAKE_BUILD_PARALLEL_LEVEL := $(shell (nproc; echo 128) | sort -n | head -n 1)
+# Up to 16 parallel processes for compiling
+CMAKE_BUILD_PARALLEL_LEVEL := $(shell (nproc; echo 16) | sort -n | head -n 1)
 CMAKE := cmake
-CCMAKE := ccmake
 
 
 .PHONY: help
 help:
 	@echo
-	@echo "| Help"
-	@echo "+======"
+	@echo "▌Help"
+	@echo "▙▄▄▄▄▄"
 	@echo
 	@echo "Available targets:"
+	@echo
 	@echo  "    debug:              debug build"
 	@echo  "    debugc:             debug build with clang"
 	@echo  "    debugcov:           debug build with coverage"
@@ -22,7 +24,9 @@ help:
 	@echo  "    minsizerel:         minimum size release build (-Os)"
 	@echo  "    minsizerelc:        minimum size release build (-Os) and clang"
 	@echo
-	@echo  "    distclean:          remove all build files"
+	@echo  "    all:                all of the above"
+	@echo
+	@echo  "    distclean: (dc)     remove all build files"
 	@echo
 
 
@@ -30,54 +34,65 @@ help:
 build:
 	( test -d "$(BUILD_DIR)" && cd "$(BUILD_DIR)" && $(MAKE) ) || ( mkdir -p "$(BUILD_DIR)" && cd "$(BUILD_DIR)" && $(CMAKE) -D CMAKE_BUILD_TYPE="$(BUILD_TYPE)" "$(TOP)" && $(MAKE) )
 
+
 .PHONY: buildc
 buildc:
 	( test -d "$(BUILD_DIR)" && cd "$(BUILD_DIR)" && $(MAKE) ) || ( mkdir -p "$(BUILD_DIR)" && cd "$(BUILD_DIR)" && CC=clang CXX=clang++ $(CMAKE) -D CMAKE_BUILD_TYPE="$(BUILD_TYPE)" "$(TOP)" && $(MAKE) )
+
 
 .PHONY: debug
 debug: BUILD_DIR=$(TOP)/build/debug
 debug: BUILD_TYPE=Debug
 debug: build
 
+
 .PHONY: debugc
 debugc: BUILD_DIR=$(TOP)/build/debugc
 debugc: BUILD_TYPE=Debug
 debugc: buildc
+
 
 .PHONY: debugcov
 debugcov: BUILD_DIR=$(TOP)/build/debugcov
 debugcov: BUILD_TYPE=DebugCov
 debugcov: build
 
+
 .PHONY: debugcovc
 debugcovc: BUILD_DIR=$(TOP)/build/debugcovc
 debugcovc: BUILD_TYPE=DebugCov
 debugcovc: buildc
+
 
 .PHONY: release
 release: BUILD_DIR=$(TOP)/build/release
 release: BUILD_TYPE=Release
 release: build
 
+
 .PHONY: releasec
 releasec: BUILD_DIR=$(TOP)/build/releasec
 releasec: BUILD_TYPE=Release
 releasec: buildc
+
 
 .PHONY: relwithdebinfo
 relwithdebinfo: BUILD_DIR=$(TOP)/build/relwithdebinfo
 relwithdebinfo: BUILD_TYPE=RelWithDebInfo
 relwithdebinfo: build
 
+
 .PHONY: relwithdebinfoc
 relwithdebinfoc: BUILD_DIR=$(TOP)/build/relwithdebinfoc
 relwithdebinfoc: BUILD_TYPE=RelWithDebInfo
 relwithdebinfoc: buildc
 
+
 .PHONY: minsizerel
 minsizerel: BUILD_DIR=$(TOP)/build/minsizerel
 minsizerel: BUILD_TYPE=MinSizeRel
 minsizerel: build
+
 
 .PHONY: minsizerelc
 minsizerelc: BUILD_DIR=$(TOP)/build/minsizerelc
@@ -99,7 +114,9 @@ all:
 	make minsizerelc
 
 
+.PHONY: distclean
 distclean:
 	-rm -rf "$(TOP)"/build/
-.PHONY: distclean
+
+
 dc: distclean
