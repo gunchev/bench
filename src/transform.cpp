@@ -53,3 +53,16 @@ int main(int argc, char** argv) {
     benchmark::RunSpecifiedBenchmarks();
     return EX_OK;
 }
+
+static void loop_lowercase_toupper(benchmark::State& state) {
+    for (auto _ : state) {  // Code inside this loop is measured repeatedly
+        std::string name = data;
+        for (char& c : name) {
+            if (c >= 'a' && c <= 'z') {
+                c = static_cast<char>(std::toupper(c));
+            }
+        }
+        benchmark::DoNotOptimize(name);  // Make sure the variable is not optimized away by compiler
+    }
+}
+BENCHMARK(loop_lowercase_toupper);  // Register the function as a benchmark

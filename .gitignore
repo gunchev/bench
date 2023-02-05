@@ -1,5 +1,6 @@
 # Project specific
 /build/
+/CMakeLists.txt.user
 
 # Prerequisites
 *.d
