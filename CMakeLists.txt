@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.20.0)  # RHEL 8
 
 project(benchmarks
-    VERSION 0.0.0.1 # PROJECT_VERSION_MAJOR, PROJECT_VERSION_MINOR, PROJECT_VERSION_PATCH, and PROJECT_VERSION_TWEAK.
+    VERSION 0.0.1.0 # PROJECT_VERSION_MAJOR, PROJECT_VERSION_MINOR, PROJECT_VERSION_PATCH, and PROJECT_VERSION_TWEAK.
     DESCRIPTION "Various benchmarks"
     HOMEPAGE_URL "https://github.com/gunchev/bench/"
     LANGUAGES C CXX)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED TRUE)
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
 # set(CMAKE_VERBOSE_MAKEFILE TRUE) # or "cd build; make VERBOSE=1"
@@ -17,6 +17,9 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING
         "Choose the type of build, options are: Debug DebugCov RelWithDebInfo Release MinSizeRel." FORCE)
 endif()
+
+include(FetchContent)
+
 
 # SOVERSION is ignored if NO_SONAME property is set.
 # "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}.${PROJECT_VERSION_TWEAK}"
@@ -47,18 +50,13 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 
 # Compiler/linker flags
-if(EXISTS "/etc/fedora-release")
-set(CMAKE_C_FLAGS   "-Wall -Wextra")
-set(CMAKE_CXX_FLAGS "-Wall -Wextra")
-else()
 set(CMAKE_C_FLAGS   "-Wall -Wextra -Werror")
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror")
-endif()
+
+# https://gcc.gnu.org/onlinedocs/gcc/Template-Instantiation.html#Template-Instantiation
 
 include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
-
-# https://gcc.gnu.org/onlinedocs/gcc/Template-Instantiation.html#Template-Instantiation
 
 set(CMAKE_REQUIRED_QUIET_OLD ${CMAKE_REQUIRED_QUIET})
 set(CMAKE_REQUIRED_QUIET ON)
@@ -120,20 +118,24 @@ set(CMAKE_C_FLAGS_MINSIZEREL                 "-Os -ggdb3 -D_FORTIFY_SOURCE=2 -DN
 set(CMAKE_CXX_FLAGS_MINSIZEREL               "-Os -ggdb3 -D_FORTIFY_SOURCE=2 -DNDEBUG")
 
 
+# Google benchmark
+find_package(benchmark 1.9.4)
+if (NOT benchmark_FOUND)
+    message(STATUS "Google Benchmark not found, fetching it...")
 
-# Enable testing?
-include(FindPkgConfig)
-pkg_check_modules(CPPUNIT cppunit>=1.14.0)  # REQUIRED
-if(CPPUNIT_FOUND)
-    enable_testing()
-    include(CTest)
-    find_program(CTEST_COVERAGE_COMMAND NAMES gcov)
-    find_program(CTEST_MEMORYCHECK_COMMAND NAMES valgrind)
-    add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND})
+    FetchContent_Declare(
+        benchmark
+        GIT_REPOSITORY https://github.com/google/benchmark.git
+        GIT_TAG v1.9.4
+    )
+
+    # Disable benchmark's own tests
+    set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+    set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "" FORCE)
+
+    FetchContent_MakeAvailable(benchmark)
 endif()
-
-
-find_package(benchmark REQUIRED)
+message(STATUS "Found Google benchmark version: ${benchmark_VERSION}")
 
 # Threads library
 # set(THREADS_PREFER_PTHREAD_FLAG TRUE)
@@ -145,8 +147,29 @@ find_package(benchmark REQUIRED)
 
 # pkg_check_modules(HIREDIS REQUIRED hiredis>=1.0.2)
 
+# Enable testing?
+#include(FindPkgConfig)
+#pkg_check_modules(CPPUNIT cppunit>=1.14.0)  # REQUIRED
+# set(GTEST_MIN_VERSION 1.13.0)
+# find_package(GTest ${GTEST_MIN_VERSION} QUIET)
+# if (NOT GTest_FOUND)
+#     message(STATUS "GoogleTest not found, fetching it...")
+#     FetchContent_Declare(
+#         googletest
+#         GIT_REPOSITORY https://github.com/google/googletest.git
+#         GIT_TAG v1.14.0
+#     )
+#     # Don't install or build gtest's own tests
+#     set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
+#     set(BUILD_GMOCK OFF CACHE BOOL "" FORCE)
+
+#     FetchContent_MakeAvailable(googletest)
+# endif()
+
+
 # include_directories(src)
 
 add_executable(transform src/transform.cpp)
 target_link_libraries(transform PRIVATE benchmark::benchmark) # fmt::fmt Threads::Threads)
+target_compile_features(transform PRIVATE cxx_std_17)
 install(TARGETS transform DESTINATION bin)

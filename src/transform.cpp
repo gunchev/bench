@@ -3,13 +3,16 @@
 #include <benchmark/benchmark.h>
 #include <string>
 #include <sysexits.h>
+#include <cstring>
 
 
 const char* data = "Hello world, to be or not to be a long string, that is the question!";
 
 static void algorithm_lowercase_my(benchmark::State& state) {
+    std::string name;
+    name.reserve(strlen(data));
     for (auto _ : state) {  // Code inside this loop is measured repeatedly
-        std::string name = data;
+        name = data;
         std::transform(name.cbegin(), name.cend(), name.begin(), [](char c) noexcept {
             return (c >= 'a' && c <= 'z') ? c = c - 'a' + 'A' : c;
         });
@@ -19,8 +22,10 @@ static void algorithm_lowercase_my(benchmark::State& state) {
 BENCHMARK(algorithm_lowercase_my);  // Register the function as a benchmark
 
 static void loop_lowercase_my(benchmark::State& state) {
+    std::string name;
+    name.reserve(strlen(data));
     for (auto _ : state) {  // Code before the loop is not measured
-        std::string name = data;
+        name = data;
         for (char& c : name) {
             if (c >= 'a' && c <= 'z') {
                 c = c - 'a' + 'A';
@@ -33,8 +38,10 @@ BENCHMARK(loop_lowercase_my);  // Register the function as a benchmark
 
 
 static void algorithm_lowercase_toupper(benchmark::State& state) {
+    std::string name;
+    name.reserve(strlen(data));
     for (auto _ : state) {  // Code inside this loop is measured repeatedly
-        std::string name = data;
+        name = data;
         std::transform(name.cbegin(), name.cend(), name.begin(), [](char c) noexcept {
             return std::toupper(static_cast<unsigned char>(c));
         });
@@ -43,6 +50,21 @@ static void algorithm_lowercase_toupper(benchmark::State& state) {
 }
 BENCHMARK(algorithm_lowercase_toupper);  // Register the function as a benchmark
 
+
+static void loop_lowercase_toupper(benchmark::State& state) {
+    std::string name;
+    name.reserve(strlen(data));
+    for (auto _ : state) {  // Code inside this loop is measured repeatedly
+        name = data;
+        for (char& c : name) {
+            if (c >= 'a' && c <= 'z') {
+                c = static_cast<char>(std::toupper(c));
+            }
+        }
+        benchmark::DoNotOptimize(name);  // Make sure the variable is not optimized away by compiler
+    }
+}
+BENCHMARK(loop_lowercase_toupper);  // Register the function as a benchmark
 
 int main(int argc, char** argv) {
     benchmark::Initialize(&argc, argv);
@@ -53,16 +75,3 @@ int main(int argc, char** argv) {
     benchmark::RunSpecifiedBenchmarks();
     return EX_OK;
 }
-
-static void loop_lowercase_toupper(benchmark::State& state) {
-    for (auto _ : state) {  // Code inside this loop is measured repeatedly
-        std::string name = data;
-        for (char& c : name) {
-            if (c >= 'a' && c <= 'z') {
-                c = static_cast<char>(std::toupper(c));
-            }
-        }
-        benchmark::DoNotOptimize(name);  // Make sure the variable is not optimized away by compiler
-    }
-}
-BENCHMARK(loop_lowercase_toupper);  // Register the function as a benchmark
