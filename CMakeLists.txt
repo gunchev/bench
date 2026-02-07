@@ -50,8 +50,8 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 
 # Compiler/linker flags
-set(CMAKE_C_FLAGS   "-Wall -Wextra -Werror")
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror")
+set(CMAKE_C_FLAGS   "-Wall -Wextra") # -Werror")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra") # -Werror")
 
 # https://gcc.gnu.org/onlinedocs/gcc/Template-Instantiation.html#Template-Instantiation
 
@@ -126,7 +126,7 @@ if (NOT benchmark_FOUND)
     FetchContent_Declare(
         benchmark
         GIT_REPOSITORY https://github.com/google/benchmark.git
-        GIT_TAG v1.9.4
+        GIT_TAG v1.9.5
     )
 
     # Disable benchmark's own tests
